@@ -25,10 +25,10 @@ Twinkle.config = {};
 
 Twinkle.config.commonEnums = wgULS({
 	watchlist: { yes: "添加到监视列表", no: "不添加到监视列表", "default": "遵守站点设置" },
-	talkPageMode: { window: "在窗口中，替换其它用户对话页", tab: "在新标签页中", blank: "在全新的窗口中" }
+	talkPageMode: { window: "在窗口中，替换成其它用户对话页", tab: "在新标签页中", blank: "在全新的窗口中" }
 }, {
 	watchlist: { yes: "加入到監視清單", no: "不加入到監視清單", "default": "遵守站點設定" },
-	talkPageMode: { window: "在窗口中，替換其它用戶對話頁", tab: "在新標簽頁中", blank: "在全新的窗口中" }
+	talkPageMode: { window: "在當前分頁，替換成其它用戶對話頁", tab: "在新分頁中", blank: "在新視窗中" }
 });
 
 Twinkle.config.commonSets = {
@@ -162,6 +162,16 @@ Twinkle.config.sections = [
 		{
 			name: "protectionSummaryAd",
 			label: wgULS("保护摘要后缀", "保護摘要後綴"),
+			helptip: wgULS("通常和编辑摘要后缀一样。", "通常和編輯摘要後綴一樣。"),
+			adminOnly: true,
+			type: "string"
+		},
+
+		// TwinkleConfig.blockSummaryAd (string)
+		// Text to be appended to the edit summary of block made using Twinkle
+		{
+			name: "blockSummaryAd",
+			label: wgULS("封禁摘要后缀", "封禁摘要後綴"),
 			helptip: wgULS("通常和编辑摘要后缀一样。", "通常和編輯摘要後綴一樣。"),
 			adminOnly: true,
 			type: "string"
@@ -644,7 +654,30 @@ Twinkle.config.sections = [
 			label: wgULS("标记时标记页面为已巡查（如可能）", "標記時標記頁面為已巡查（如可能）"),
 			helptip: wgULS("基于技术原因，页面仅会在由Special:NewPages到达时被标记为已巡查。", "基於技術原因，頁面僅會在由Special:NewPages到達時被標記為已巡查。"),
 			type: "boolean"
-		}
+		},
+
+		{
+			name: "FwdCsdToXfd",
+			label: wgULS("提删类别增加转交自快速删除候选", "提刪類別增加轉交自快速刪除候選"),
+			helptip: wgULS("请确保您充分了解[[Wikipedia:快速删除方针]]才开启此功能。", "請確保您充分了解[[Wikipedia:快速刪除方針]]才開啟此功能。"),
+			type: "boolean"
+		},
+
+		{
+			name: "XfdClose",
+			label: wgULS("在存废讨论显示关闭讨论按钮", "在存廢討論顯示關閉討論按鈕"),
+			helptip: wgULS("请确保您充分了解[[Wikipedia:关闭删除讨论指南]]才开启此功能。", "請確保您充分了解[[Wikipedia:關閉刪除討論指南]]才開啟此功能。"),
+			type: "enum",
+			enumValues: wgULS({
+				"hide": "不显示",
+				"nonadminonly": "只包含非管理员可使用选项",
+				"all": "显示所有选项"
+			}, {
+				"hide": "不顯示",
+				"nonadminonly": "只包含非管理員可使用選項",
+				"all": "顯示所有選項"
+			})
+		},
 	]
 
 },
@@ -1052,7 +1085,9 @@ Twinkle.config.init = function twinkleconfigInit() {
 				if (pref.helptip) {
 					// convert mentions of templates in the helptip to clickable links
 					cell.innerHTML = pref.helptip.replace(/{{(.+?)}}/g,
-						'{{<a href="' + mw.util.getUrl("Template:") + '$1" target="_blank">$1</a>}}');
+						'{{<a href="' + mw.util.getUrl("Template:") + '$1" target="_blank">$1</a>}}')
+							.replace(/\[\[(.+?)]]/g,
+						'<a href="' + mw.util.getUrl("") + '$1" target="_blank">$1</a>');
 				}
 				// add reset link (custom lists don't need this, as their config value isn't displayed on the form)
 				if (pref.type !== "customList") {
@@ -1223,7 +1258,7 @@ Twinkle.config.listDialog.display = function twinkleconfigListDialogDisplay(e) {
 	var dlgtable = document.createElement("table");
 	dlgtable.className = "wikitable";
 	dlgtable.style.margin = "1.4em 1em";
-	dlgtable.style.width = "auto";
+	dlgtable.style.width = "97%";
 
 	var dlgtbody = document.createElement("tbody");
 
@@ -1650,7 +1685,7 @@ Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 		});
 	}
 
-	var text =
+	var text = wgULS(
 		"// twinkleoptions.js：用户Twinkle参数设置文件\n" +
 		"//\n" +
 		"// 注：修改您的参数设置最简单的办法是使用\n" +
@@ -1661,12 +1696,25 @@ Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 		"// 在下一次您点击“保存”时被覆盖。\n" +
 		"// 修改此文件时，请记得使用合法的JavaScript。\n" +
 		"\n" +
-		"window.Twinkle.prefs = ";
+		"window.Twinkle.prefs = ",
+
+		"// twinkleoptions.js：使用者Twinkle參數設定檔案\n" +
+		"//\n" +
+		"// 註：修改您的參數設定最簡單的辦法是使用\n" +
+		"// Twinkle參數設定面板，在[[" + Morebits.pageNameNorm + "]]。\n" +
+		"//\n" +
+		"// 這個檔案是自動產生的，您所做的任何修改（除了\n" +
+		"// 以一種合法的JavaScript的方式來修改這些屬性值）會\n" +
+		"// 在下一次您點擊「儲存」時被覆蓋。\n" +
+		"// 修改此檔案時，請記得使用合法的JavaScript。\n" +
+		"\n" +
+		"window.Twinkle.prefs = "
+		);
 	text += JSON.stringify(newConfig, null, 2);
 	text +=
 		";\n" +
 		"\n" +
-		"// twinkleoptions.js到此为止\n";
+		wgULS("// twinkleoptions.js到此为止\n", "// twinkleoptions.js到此為止\n");
 
 	pageobj.setPageText(text);
 	pageobj.setEditSummary(wgULS("保存Twinkle参数设置：来自[[" + Morebits.pageNameNorm + "]]的自动编辑。 ([[WP:TW|TW]])", "儲存Twinkle偏好設定：來自[[" + Morebits.pageNameNorm + "]]的自動編輯。 ([[WP:TW|TW]])"));

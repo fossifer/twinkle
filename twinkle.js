@@ -6,11 +6,12 @@
  * |                           修改前请联系维护者。                          |
  * +-------------------------------------------------------------------------+
  *
- * 从Github导入[https://github.com/vjudge1/twinkle]
+ * 从Github导入[https://github.com/Xi-Plus/twinkle]
+ * 基於 [https://github.com/jimmyxu/twinkle] 和 [https://github.com/vjudge1/twinkle] 的修改
  *
  * ----------
  *
- * 这是经过篡改的Twinkle，是让新手、管理员及他们之间的用户破坏维基百科的
+ * 这是经过亂改的Twinkle，是让維護者自己方便使用维基百科的
  * 好帮手。请参见[[WP:TW]]以获取更多信息。
  *
  * 维护者：~~~
@@ -46,8 +47,6 @@ window.wgUVS = function (hans, hant, cn, tw, hk, sg, zh, mo, my) {
 var Twinkle = {};
 window.Twinkle = Twinkle;  // allow global access
 
-Twinkle.amanojaku = true;
-
 // Check if account is experienced enough to use Twinkle
 Twinkle.userAuthorized = Morebits.userIsInGroup( "autoconfirmed" ) || Morebits.userIsInGroup( "confirmed" );
 
@@ -71,6 +70,7 @@ Twinkle.defaultConfig.twinkle = {
 	summaryAd: "",
 	deletionSummaryAd: " ([[WP:TW|TW]])",
 	protectionSummaryAd: " ([[WP:TW|TW]])",
+	blockSummaryAd: " ([[WP:TW|TW]])",
 	userTalkPageMode: "tab",
 	dialogLargeFont: false,
 	 // Block
@@ -117,6 +117,8 @@ Twinkle.defaultConfig.twinkle = {
 	xfdWatchPage: "default",
 	xfdWatchUser: "default",
 	markXfdPagesAsPatrolled: true,
+	FwdCsdToXfd: Morebits.userIsInGroup('sysop'),
+	XfdClose: ( Morebits.userIsInGroup('sysop') ? 'all' : 'hide' ),
 	 // Copyvio
 	copyvioWatchPage: "default",
 	copyvioWatchUser: "default",
@@ -428,7 +430,7 @@ Twinkle.load = function () {
 	}
 
 	// Set custom Api-User-Agent header, for server-side logging purposes
-	Morebits.wiki.api.setApiUserAgent( 'Twinkle~zh~/2.0 (' + mw.config.get( 'wgDBname' ) + ', cracked by Amanojaku)' );
+	Morebits.wiki.api.setApiUserAgent( 'Twinkle~zh~/2.0 (' + mw.config.get( 'wgDBname' ) + ')' );
 
 	// Load the modules in the order that the tabs should appear
 	// User/user talk-related
@@ -455,6 +457,8 @@ Twinkle.load = function () {
 	if ( Morebits.userIsInGroup('sysop') ) {
 		Twinkle.batchdelete();
 		Twinkle.batchundelete();
+	}
+	if (Twinkle.getPref('XfdClose') !== 'hide') {
 		Twinkle.close();
 	}
 

@@ -935,6 +935,7 @@ Twinkle.protect.callback.changePreset = function twinkleprotectCallbackChangePre
 
 	if (actiontype === 'protect') {  // actually protecting the page
 		var item = Twinkle.protect.protectionPresetsInfo[form.category.value];
+
 		if (mw.config.get('wgArticleId')) {
 			if (item.edit) {
 				form.editmodify.checked = true;
